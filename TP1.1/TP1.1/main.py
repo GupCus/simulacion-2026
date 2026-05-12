@@ -15,19 +15,40 @@ import matplotlib.pyplot as plt
 import sys
 
 
+def calcular_frecuencias(valores, cant_tiradas):
+    frecuencia_absoluta = [valores.count(numero) for numero in range(37)]
+    frecuencia_relativa = [frecuencia_absoluta[numero] / cant_tiradas for numero in range(37)]
+    return frecuencia_absoluta, frecuencia_relativa
+
 def ruleta_casino(cant_tiradas, cant_corridas, nro_apostado):
     for i in range(cant_corridas):
         random_values = [random.randint(0, 36) for _ in range(cant_tiradas)]
 
-        print("Apostaste al: ", nro_apostado)
-        print(random_values)
-        plt.figure(figsize=(10, 6))
-        plt.plot(random_values, label='Valores Aleatorios', color='blue')
-        plt.xlabel('Número de tirada')
-        plt.ylabel('Valor obtenido')
-        plt.title('Gráfico de Valores Aleatorios con Valor Constante Intermitente')
-        plt.legend()
-        plt.grid(True)
+        frecuencia_absoluta, frecuencia_relativa = calcular_frecuencias(random_values, cant_tiradas)
+
+        valor_teorico_esperado = cant_tiradas / 37  
+
+        fig, axs = plt.subplots(1, 3, figsize=(18, 6))
+
+        axs[0].bar(range(37), frecuencia_absoluta, color='blue')
+        axs[0].set_title(f'Corrida {i+1}: Frecuencia Absoluta')
+        axs[0].set_xlabel('Número')
+        axs[0].set_ylabel('Frecuencia')
+
+        axs[1].bar(range(37), frecuencia_relativa, color='red')
+        axs[1].set_title(f'Corrida {i+1}: Frecuencia Relativa')
+        axs[1].set_xlabel('Número')
+        axs[1].set_ylabel('Frecuencia')
+
+        axs[2].plot(random_values, color='blue', label='Valores aleatorios')
+        axs[2].axhline(y=nro_apostado, color='red', linestyle='--', label=f'Apostado ({nro_apostado})')
+        axs[2].set_title(f'Corrida {i+1}: Valores por tirada')
+        axs[2].set_xlabel('Tirada')
+        axs[2].set_ylabel('Valor')
+        axs[2].legend()
+
+        plt.tight_layout()
+        plt.savefig(f'corrida_{i+1}.png')
         plt.show()
 
 def main():
@@ -42,7 +63,7 @@ def main():
             print("Argumentos inválidos")
             return
 
-    except ValueError,IndexError:
+    except (ValueError,IndexError):
         print("No se puede ejecutar el programa. Uso correcto: python main.py -c XXX -n YYY -e ZZ")
         return
 
@@ -51,3 +72,21 @@ def main():
 # Esta es una buena práctica en Python 3 para indicar que main() solo debe ejecutarse si ejecutamos ESTE archivo directamente.
 if __name__ == "__main__":
     main()
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
