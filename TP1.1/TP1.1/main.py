@@ -35,72 +35,80 @@ def ruleta_casino(cant_corridas, cant_tiradas, nro_apostado):
     historial_desvios = []
 
     for i in range(cant_corridas):
-
-        #Acá calcula según la cant_tiradas
         valores_tiradas = [random.randint(0, 36) for _ in range(cant_tiradas)]
-        frecuencia_absoluta, frecuencia_relativa = calcular_frecuencias(valores_tiradas, cant_tiradas)
-        promedio = sum(valores_tiradas) / len(valores_tiradas)
-        varianza = statistics.variance(valores_tiradas)
-        desvio_estandar = varianza ** 0.5
 
-        #Sumo a los historiales los resultados
-        historial_frecuencias.append(frecuencia_relativa[nro_apostado])
-        historial_promedios.append(promedio)
-        historial_varianzas.append(varianza)
-        historial_desvios.append(desvio_estandar)
+        frn = []
+        vpn = []
+        vvn = []
+        vdn = []
 
-        '''
-        #Acá grafica cant_corridas de veces, por eso ejecuta las ventanas por cada corrida, queda comentado ver si podemos hacer algo interesante
-        #Gráficos generales, distribución de los números.
-        fig, axs = plt.subplots(1, 3, figsize=(18, 6))
-        axs[0].bar(range(37), frecuencia_absoluta, color='blue')
-        axs[0].set_title(f'Corrida {i+1}: Frecuencia Absoluta')
-        axs[0].set_xlabel('Número')
-        axs[0].set_ylabel('Frecuencia')
+        conteo_apostado = 0
+        suma = 0
+        suma_cuadrados = 0
 
-        axs[1].bar(range(37), frecuencia_relativa, color='red')
-        axs[1].set_title(f'Corrida {i+1}: Frecuencia Relativa')
-        axs[1].set_xlabel('Número')
-        axs[1].set_ylabel('Frecuencia')
+        for j in range(cant_tiradas):
+            valor = valores_tiradas[j]
+            n = j + 1
 
-        axs[2].plot(valores_tiradas, color='blue', label='Valores aleatorios')
-        axs[2].axhline(y=promedio, color='red', linestyle='--', label=f'Promedio de las tiradas ({promedio})')
-        axs[2].set_title(f'Corrida {i+1}: Valores por tirada')
-        axs[2].set_xlabel('Tirada')
-        axs[2].set_ylabel('Valor')
-        axs[2].legend()
+            if valor == nro_apostado:
+                conteo_apostado += 1
+            suma += valor
+            suma_cuadrados += valor ** 2
 
+            promedio = suma / n
+            frn.append(conteo_apostado / n)
+            vpn.append(promedio)
 
-        plt.tight_layout()
-        #plt.savefig(f'corrida_{i+1}.png') #Desmarcar esto provoca que se guarden las corridas como imágenes.
-        plt.show()
-        '''
-    #Gráficas de los históricos por corrida
+            if n > 1:
+                varianza = (suma_cuadrados - n * promedio ** 2) / (n - 1)
+                vvn.append(varianza)
+                vdn.append(varianza ** 0.5)
+            else:
+                vvn.append(0)
+                vdn.append(0)
+
+        historial_frecuencias.append(frn)
+        historial_promedios.append(vpn)
+        historial_varianzas.append(vvn)
+        historial_desvios.append(vdn)
+
+    eje_x = list(range(1, cant_tiradas + 1))
+
+    #Gráficas de convergencia por número de tiradas
     fig, axs = plt.subplots(2, 2, figsize=(18, 6))
-    axs[0][0].plot(historial_frecuencias, color='blue', label='Frecuencia Relativa')
+
+    for frn in historial_frecuencias:
+        axs[0][0].plot(eje_x, frn, linewidth=0.8, alpha=0.7)
     axs[0][0].axhline(y=fresperada, color='red', linestyle='--', label=f'Frecuencia esperada ({fresperada})')
     axs[0][0].set_title('Frecuencia Relativa')
-    axs[0][0].set_xlabel('Corrida')
+    axs[0][0].set_xlabel('Número de tiradas')
     axs[0][0].set_ylabel('Frecuencia Relativa')
     axs[0][0].legend()
-    axs[0][1].plot(historial_promedios, color='blue', label='Promedio')
+
+    for vpn in historial_promedios:
+        axs[0][1].plot(eje_x, vpn, linewidth=0.8, alpha=0.7)
     axs[0][1].axhline(y=promesperado, color='red', linestyle='--', label=f'Promedio esperado ({promesperado})')
     axs[0][1].set_title('Promedio')
-    axs[0][1].set_xlabel('Corrida')
+    axs[0][1].set_xlabel('Número de tiradas')
     axs[0][1].set_ylabel('Promedio')
     axs[0][1].legend()
-    axs[1][0].plot(historial_varianzas, color='blue', label='Varianza')
+
+    for vvn in historial_varianzas:
+        axs[1][0].plot(eje_x, vvn, linewidth=0.8, alpha=0.7)
     axs[1][0].axhline(y=varianzaesperada, color='red', linestyle='--', label=f'Varianza esperada ({varianzaesperada})')
     axs[1][0].set_title('Varianza')
-    axs[1][0].set_xlabel('Corrida')
+    axs[1][0].set_xlabel('Número de tiradas')
     axs[1][0].set_ylabel('Varianza')
     axs[1][0].legend()
-    axs[1][1].plot(historial_desvios,color = 'blue', label = 'Desvío')
+
+    for vdn in historial_desvios:
+        axs[1][1].plot(eje_x, vdn, linewidth=0.8, alpha=0.7)
     axs[1][1].axhline(y=desvioesperado, color='red', linestyle='--', label=f'Varianza esperada ({desvioesperado})')
     axs[1][1].set_title('Desvío')
-    axs[1][1].set_xlabel('Corrida')
+    axs[1][1].set_xlabel('Número de tiradas')
     axs[1][1].set_ylabel('Desvío')
     axs[1][1].legend()
+
     plt.tight_layout()
     plt.show()
 
