@@ -17,140 +17,104 @@ import sys
 # ─────────────────────────────────────────────
 # Simulación de una corrida
 # ─────────────────────────────────────────────
-def simular_corrida(cant_tiradas, nro_apostado, estrategia):
-    """
-    Simula una corrida de cant_tiradas tiradas y devuelve las listas
-    de estadísticos acumulados tirada a tirada.
-    """
-    frn = []   # frecuencia relativa acumulada del número apostado
+def simular_corrida(cant_tiradas, nro_apostado, estrategia,tipo_capital) -> tuple:
+    caja=1000000
+    capital_inicial=caja
+    cantidad_apostada_inicial=100
+    cant_a_apostar=cantidad_apostada_inicial
+    valores_caja=[]
+    valores_frecuencia_acumulada=[]
+    gane=0
 
-    conteo_apostado = 0
-    suma = 0
+    for j in range(cant_tiradas):
+        if tipo_capital=='f' and cant_a_apostar>caja:
+            break
 
-    for j in range(cant_tiradas, estrategia):
         valor = random.randint(0, 36)
-        n = j + 1
 
-        if valor == nro_apostado:
-            conteo_apostado += 1
+        if estrategia=="m":
+            cant_a_apostar,caja=martingala(nro_apostado,valor,caja,cant_a_apostar,cantidad_apostada_inicial)
+        elif estrategia=="d":
+           cant_a_apostar,caja=dalembert()
+        elif estrategia=="f":
+           cant_a_apostar,caja=fibonacci()
+        elif estrategia=="o":
+            cant_a_apostar,caja=goBigOrGoHome()
+        
+        if valor==nro_apostado:
+            gane=gane+1
+        
+        valores_caja.append(caja)
+        valores_frecuencia_acumulada.append(gane/(j+1))  #j+1 porque j empieza en 0
+    print(cant_a_apostar)
+    print( valores_caja)
+    print(valores_frecuencia_acumulada[:30])
+    return valores_caja,valores_frecuencia_acumulada,capital_inicial
 
-        suma += valor
 
-        promedio = suma / n
-        frn.append(conteo_apostado / n)
 
-    return frn
+       
+
+        
+
+        
+        
+
+  
 
 
 # ─────────────────────────────────────────────
 # Graficación
 # ─────────────────────────────────────────────
-def graficar(titulo, eje_x, historiales, etiquetas, valores_esperados, labels_esperados):
-    """
-    Genera una figura 2x2 con los 4 estadísticos.
-    historiales  : [hist_frecuencias, hist_promedios, hist_varianzas, hist_desvios]
-    etiquetas    : títulos de cada subplot
-    valores_esp  : línea roja de referencia para cada subplot
-    labels_esp   : etiqueta de la línea roja
-   
-    fig, axs = plt.subplots(2, 2, figsize=(14, 8))
-    fig.suptitle(titulo, fontsize=14, fontweight='bold')
-
-    posiciones = [(0, 0), (0, 1), (1, 0), (1, 1)]
-    ylabels = ['Frecuencia Relativa', 'Promedio', 'Varianza', 'Desvío Estándar']
-
-    for idx, (fila, col) in enumerate(posiciones):
-        ax = axs[fila][col]
-        for corrida in historiales[idx]:
-            ax.plot(eje_x, corrida, linewidth=0.8, alpha=0.6)
-        ax.axhline(
-            y=valores_esperados[idx],
-            color='red',
-            linestyle='--',
-            linewidth=1.5,
-            label=labels_esperados[idx]
-        )
-        ax.set_title(etiquetas[idx])
-        ax.set_xlabel('Número de tiradas (n)')
-        ax.set_ylabel(ylabels[idx])
-        ax.legend(fontsize=8)
-
-    plt.tight_layout()
-    plt.show()
-"""
-
+def graficar(valores_caja,valores_frecuencia_acumulada,capital_inicial):
+  fig,(ax1,ax2)=plt.subplots(1,2,figsize=(12,5))
+  eje_x=range(1,len(valores_frecuencia_acumulada)+1)
+  ax1.bar(eje_x,valores_frecuencia_acumulada,color="red")
+  ax1.set_xlabel('n (numero de tiradas)')
+  ax1.set_ylabel('fr (frecuencia relativa)')
+  ax1.set_title('Frecuencia relativa de obtener la apuesta favorable segun n')
+  ax1.axhline(y=1/37, color='blue', linestyle='--', label='frec. esperada (1/37)')
+  ax1.legend()
+  ax2.plot(eje_x,valores_caja,color="red",label="fc (Flujo de caja)")
+  ax2.axhline(y=capital_inicial,color="blue",linestyle="--",label="fci (flujo de caja inicial)")
+  ax2.set_xlabel("n (numero de tiradas)")
+  ax2.set_ylabel("cc (cantidad de capital)")
+  ax2.set_title("Flujo de caja")
+  ax2.legend()
+  plt.tight_layout()
+  plt.show()
 # ─────────────────────────────────────────────
 # Función principal de simulación
 # ─────────────────────────────────────────────
-def ruleta_casino(cant_corridas, cant_tiradas, nro_apostado, estretegia, capital):
-    # Valores teóricos esperados (distribución uniforme discreta sobre {0,...,36})
-    fresperada      = 1 / 37                          # ≈ 0.02703
-    promesperado    = 36 / 2                          # = 18
-    varianzaesperada = ((36 - 0 + 1) ** 2 - 1) / 12  # = 114
-    desvioesperado  = varianzaesperada ** 0.5         # ≈ 10.677
-
-    etiquetas = [
-        f'Frecuencia Relativa del número {nro_apostado}',
-        'Valor Promedio de las tiradas',
-        'Varianza de las tiradas',
-        'Desvío Estándar de las tiradas'
-    ]
-    valores_esp = [fresperada, promesperado, varianzaesperada, desvioesperado]
-    labels_esp  = [
-        f'Frec. esperada = {fresperada:.5f}',
-        f'Promedio esperado = {promesperado}',
-        f'Varianza esperada = {varianzaesperada}',
-        f'Desvío esperado = {desvioesperado:.4f}'
-    ]
-
-    eje_x = list(range(1, cant_tiradas + 1))
-
-    # ── FIGURA 1: una sola corrida ─────────────────────────────────────────
-    # Muestra cómo convergen los estadísticos en un único experimento
-    frn1, vpn1, vvn1, vdn1 = simular_corrida(cant_tiradas, nro_apostado)
-
-    graficar(
-        titulo=f'Figura 1 — Una corrida ({cant_tiradas} tiradas, número apostado: {nro_apostado})',
-        eje_x=eje_x,
-        historiales=[[frn1], [vpn1], [vvn1], [vdn1]],
-        etiquetas=etiquetas,
-        valores_esperados=valores_esp,
-        labels_esperados=labels_esp
-    )
-
-    # ── FIGURA 2: múltiples corridas simultáneas ───────────────────────────
-    # Muestra la variabilidad entre corridas y la convergencia al TCL
-    hist_frecuencias = []
-    hist_promedios   = []
-    hist_varianzas   = []
-    hist_desvios     = []
-
-    for _ in range(cant_corridas):
-        frn, vpn, vvn, vdn = simular_corrida(cant_tiradas, nro_apostado)
-        hist_frecuencias.append(frn)
-        hist_promedios.append(vpn)
-        hist_varianzas.append(vvn)
-        hist_desvios.append(vdn)
-
-    graficar(
-        titulo=f'Figura 2 — {cant_corridas} corridas simultáneas ({cant_tiradas} tiradas, número apostado: {nro_apostado})',
-        eje_x=eje_x,
-        historiales=[hist_frecuencias, hist_promedios, hist_varianzas, hist_desvios],
-        etiquetas=etiquetas,
-        valores_esperados=valores_esp,
-        labels_esperados=labels_esp
-    )
-
+def ruleta_casino(cant_corridas, cant_tiradas, nro_apostado, estretegia, tipo_capital):
+    
+    #esto seria para una sola corrida (las dos primeras graficas)
+    valores_caja,valores_frecuencia_acumulada,capital_inicial=simular_corrida(cant_tiradas,nro_apostado,estretegia,tipo_capital)
+    graficar(valores_caja,valores_frecuencia_acumulada,capital_inicial)
 
 # ─────────────────────────────────────────────
 # Estrategias
 # ─────────────────────────────────────────────
 
-def martingala(nro_apostado, valor, cant_capital):
+def martingala(nro_apostado, valor, caja,cant_a_apostar,cant_apostada_inicial) ->tuple:
+    if valor == nro_apostado:
+        caja=caja+cant_a_apostar*36-cant_a_apostar
+        cant_a_apostar=cant_apostada_inicial
+
+    else:
+        caja=caja-cant_a_apostar
+        cant_a_apostar=cant_a_apostar*2
+    return cant_a_apostar,caja
 
 
-    if valor == nro_apostado
 
+def dalembert():
+    pass
+
+def fibonacci():
+    pass
+def goBigOrGoHome():
+    pass
 
 
 # ─────────────────────────────────────────────
@@ -161,15 +125,16 @@ def main():
         cant_corridas = int(sys.argv[2])
         cant_tiradas  = int(sys.argv[4])
         nro_apostado  = int(sys.argv[6])
-
-        if cant_tiradas >= 1 and cant_corridas >= 1 and 0 <= nro_apostado <= 36:
-            ruleta_casino(cant_corridas, cant_tiradas, nro_apostado)
+        estrategia_utilizada=sys.argv[8]
+        tipo_capital=sys.argv[10]
+        if cant_tiradas >= 1 and cant_corridas >= 1 and 0 <= nro_apostado <= 36 and estrategia_utilizada in ['m','d','f','o'] and tipo_capital in['i','f']:
+            ruleta_casino(cant_corridas, cant_tiradas, nro_apostado,estrategia_utilizada,tipo_capital)
         else:
-            print("Argumentos inválidos. Rangos: corridas>=1, tiradas>=1, número entre 0 y 36.")
+            print("Argumentos inválidos. Rangos: corridas>=1, tiradas>=1, número entre 0 y 36, estrategia tiene que estar entre ['m','d','f','o'] y tipo de capital tiene que estar entre ['i','f'] .")
 
     except (ValueError, IndexError):
-        print("Uso correcto: python main.py -c <corridas> -n <tiradas> -e <número>")
-        print("Ejemplo:      python main.py -c 5 -n 1000 -e 17")
+        print("Uso correcto: python main.py -c <corridas> -n <tiradas> -e <número> -s <estrategia> -a <capital>")
+        print("Ejemplo:      python main.py -c 5 -n 1000 -e 17 -s f -a f")
 
 
 if __name__ == "__main__":
