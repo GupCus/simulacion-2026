@@ -1,11 +1,9 @@
 # Consignas del TP:
-# El trabajo de investigación consiste en construir un programa en lenguaje Python 3.x que simule el funcionamiento del
-# plato de una ruleta. Para esto se debe tener en cuenta los siguientes temas:
-# • Generación de valores aleatorios enteros.
-# • Uso de listas para el almacenamiento de datos.
-# • Uso de la estructura de control FOR para iterar las listas.
-# • Empleo de funciones estadísticas.
-# • Gráficos de los resultados mediante el paquete Matplotlib.
+# • Beneficios de las apuestas según la selección (color, fila, número único, etc).
+# • Distintos tipos de estrategias de apuestas en la ruleta.
+# • Gráficas de los resultados mediante el paquete Matplotlib (u otro similar).
+# Se pide que se detalle la estrategias empleadas y las fuentes donde las obtuvieron (si no son de elaboración propia).
+# Se proponen analizar 3 estrategia: la martingala, D’Alembert y Fibonacci,
 # Por lo tanto la ejecución junto con el TP 1.1: python programa.py -c XXX -n YYY -e ZZ -s -a
 # Nota: El parámetro -e es solo en caso de usar un solo número para la estrategia seleccionada, sino no es necesario.
 
@@ -57,8 +55,16 @@ def simular_corrida(cant_tiradas, apuesta, estrategia,tipo_capital) -> tuple:
             cant_a_apostar,caja,cortar=goBigOrGoHome(apuesta, valor, caja, cant_a_apostar, capital_inicial, cantidad_apostada_inicial)
             if cortar:
                 break
-        if valor==apuesta:
-            gane=gane+1
+        
+        if  (apuesta == "rojo" and valor in rojo) or \
+            (apuesta == "negro" and valor in negro) or \
+            (apuesta == "par" and valor != 0 and valor % 2 == 0) or \
+            (apuesta == "impar" and valor != 0 and valor % 2 != 0) or \
+            (apuesta == "primera columna" and valor in primera_columna) or \
+            (apuesta == "segunda columna" and valor in segunda_columna) or \
+            (apuesta == "tercera columna" and valor in tercera_columna) or \
+            (valor == apuesta):
+            gane = gane + 1
         
         valores_caja.append(caja)
         valores_frecuencia_acumulada.append(gane/(j+1))  #j+1 porque j empieza en 0
@@ -141,16 +147,14 @@ def fibonacci():
 
 def goBigOrGoHome(apuesta, valor, caja, cant_a_apostar, capital_inicial, cantidad_apostada_inicial):
     if valor == apuesta:
-        caja = caja + cant_a_apostar * 35  # ganancia neta = apuesta * 35
+        caja = caja + cant_a_apostar * 35
         if caja >= capital_inicial * 2:
-            return cant_a_apostar, caja, True   # duplicó → retirarse
+            return cant_a_apostar, caja, True
         cant_a_apostar = cantidad_apostada_inicial
         return cant_a_apostar, caja, False
     else:
         caja = caja - cant_a_apostar
         cant_a_apostar = cant_a_apostar * 1.2
-        if caja <= 0 or cant_a_apostar > caja:  # bancarrota
-            return cant_a_apostar, caja, True
         return cant_a_apostar, caja, False
 
 # ─────────────────────────────────────────────
