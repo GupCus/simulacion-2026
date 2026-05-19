@@ -60,9 +60,9 @@ def simular_corrida(cant_tiradas, apuesta, estrategia,tipo_capital) -> tuple:
             (apuesta == "negro" and valor in negro) or \
             (apuesta == "par" and valor != 0 and valor % 2 == 0) or \
             (apuesta == "impar" and valor != 0 and valor % 2 != 0) or \
-            (apuesta == "primera columna" and valor in primera_columna) or \
-            (apuesta == "segunda columna" and valor in segunda_columna) or \
-            (apuesta == "tercera columna" and valor in tercera_columna) or \
+            (apuesta == "c1" and valor in primera_columna) or \
+            (apuesta == "c2" and valor in segunda_columna) or \
+            (apuesta == "c3" and valor in tercera_columna) or \
             (valor == apuesta):
             gane = gane + 1
         
@@ -73,18 +73,24 @@ def simular_corrida(cant_tiradas, apuesta, estrategia,tipo_capital) -> tuple:
     print(valores_frecuencia_acumulada[:30])
     return valores_caja,valores_frecuencia_acumulada,capital_inicial
 
-
+def frecuencia_esperada(apuesta):
+    if apuesta in ['rojo','negro','par','impar']:
+        return 18/37
+    elif apuesta in ['c1','c2','c3']:
+        return 12/37
+    else:
+        return 1/37
 # ─────────────────────────────────────────────
 # Graficación
 # ─────────────────────────────────────────────
-def graficar(valores_caja,valores_frecuencia_acumulada,capital_inicial):
+def graficar(valores_caja,valores_frecuencia_acumulada,capital_inicial,frecuencia):
   fig,(ax1,ax2)=plt.subplots(1,2,figsize=(12,5))
   eje_x=range(1,len(valores_frecuencia_acumulada)+1)
   ax1.bar(eje_x,valores_frecuencia_acumulada,color="red")
   ax1.set_xlabel('n (numero de tiradas)')
   ax1.set_ylabel('fr (frecuencia relativa)')
   ax1.set_title('Frecuencia relativa de obtener la apuesta favorable segun n')
-  ax1.axhline(y=1/37, color='blue', linestyle='--', label='frec. esperada (1/37)')
+  ax1.axhline(y=frecuencia, color='blue', linestyle='--', label=f'frec. esperada ({frecuencia:.4f})')
   ax1.legend()
   ax2.plot(eje_x,valores_caja,color="red",label="fc (Flujo de caja)")
   ax2.axhline(y=capital_inicial,color="blue",linestyle="--",label="fci (flujo de caja inicial)")
@@ -94,15 +100,52 @@ def graficar(valores_caja,valores_frecuencia_acumulada,capital_inicial):
   ax2.legend()
   plt.tight_layout()
   plt.show()
+
+def graficar_multiples(valores_caja_corridas,  valores_frecuencia_acumulada_corridas, capital_inicial,frecuencia):
+    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(12, 5))
+
+    for  valor_frecuencia_corrida in  valores_frecuencia_acumulada_corridas:
+        eje_x = range(1, len(valor_frecuencia_corrida) + 1)
+        ax1.plot(eje_x, valor_frecuencia_corrida, linewidth=0.8, alpha=0.6)
+
+    ax1.axhline(y=frecuencia, color='blue', linestyle='--', label=f'frec. esperada ({frecuencia:.4f})')
+    ax1.set_xlabel('n (numero de tiradas)')
+    ax1.set_ylabel('fr (frecuencia relativa)')
+    ax1.set_title('Frecuencia relativa - varias corridas')
+    ax1.legend()
+
+    for  valor_caja_corrida in valores_caja_corridas:
+        eje_x = range(1, len(valor_caja_corrida) + 1)
+        ax2.plot(eje_x, valor_caja_corrida, linewidth=0.8, alpha=0.6)
+
+    ax2.axhline(y=capital_inicial, color='blue', linestyle='--', label='fci (capital inicial)')
+    ax2.set_xlabel('n (numero de tiradas)')
+    ax2.set_ylabel('cc (cantidad de capital)')
+    ax2.set_title('Flujo de caja - varias corridas')
+    ax2.legend()
+
+    plt.tight_layout()
+    plt.show()
 # ─────────────────────────────────────────────
 # Función principal de simulación
 # ─────────────────────────────────────────────
-def ruleta_casino(cant_corridas, cant_tiradas, nro_apostado, estretegia, tipo_capital):
-    
+def ruleta_casino(cant_corridas, cant_tiradas, nro_apostado, estrategia, tipo_capital):
+    frecuencia=frecuencia_esperada(nro_apostado)
     #esto seria para una sola corrida (las dos primeras graficas)
-    valores_caja,valores_frecuencia_acumulada,capital_inicial=simular_corrida(cant_tiradas,nro_apostado,estretegia,tipo_capital)
-    graficar(valores_caja,valores_frecuencia_acumulada,capital_inicial)
+    valores_caja,valores_frecuencia_acumulada,capital_inicial=simular_corrida(cant_tiradas,nro_apostado,estrategia,tipo_capital)
+    graficar(valores_caja,valores_frecuencia_acumulada,capital_inicial,frecuencia)
 
+    valores_caja_corridas=[]
+    valores_frecuencia_acumulada_corridas=[]
+
+    for i in range(cant_corridas):
+        valor_caja_corrida,valor_frecuencia_acumulada_corrida,capital_inicial=simular_corrida(cant_tiradas,nro_apostado,estrategia,tipo_capital)
+        valores_caja_corridas.append(valor_caja_corrida)
+        valores_frecuencia_acumulada_corridas.append(valor_frecuencia_acumulada_corrida)
+    graficar_multiples(valores_caja_corridas,  valores_frecuencia_acumulada_corridas, capital_inicial,frecuencia)
+
+    
+    
 # ─────────────────────────────────────────────
 # Estrategias
 # ─────────────────────────────────────────────
@@ -121,13 +164,13 @@ def martingala(apuesta, valor, caja,cant_a_apostar,cant_apostada_inicial) ->tupl
     elif apuesta == "impar" and valor % 2 != 0 and valor != 0:
         caja=caja+cant_a_apostar*2-cant_a_apostar
         cant_a_apostar=cant_apostada_inicial
-    elif apuesta == "primera columna" and valor in primera_columna: 
+    elif apuesta == "c1" and valor in primera_columna: 
         caja=caja+cant_a_apostar*3-cant_a_apostar
         cant_a_apostar=cant_apostada_inicial
-    elif apuesta == "segunda columna" and valor in segunda_columna: 
+    elif apuesta == "c2" and valor in segunda_columna: 
         caja=caja+cant_a_apostar*3-cant_a_apostar
         cant_a_apostar=cant_apostada_inicial
-    elif apuesta == "tercera columna" and valor in tercera_columna: 
+    elif apuesta == "c3" and valor in tercera_columna: 
         caja=caja+cant_a_apostar*3-cant_a_apostar
         cant_a_apostar=cant_apostada_inicial
     elif valor == apuesta: 
@@ -170,7 +213,7 @@ def main():
             apuesta = sys.argv[6].lower()
         estrategia_utilizada = sys.argv[8]
         tipo_capital = sys.argv[10]
-        if cant_tiradas >= 1 and cant_corridas >= 1 and ((isinstance(apuesta, int) and 0 <= apuesta <= 36) or apuesta in ["rojo","negro","par","impar","primera columna","segunda columna","tercera columna"]) and estrategia_utilizada in ['m','d','f','o'] and tipo_capital in ['i','f']:
+        if cant_tiradas >= 1 and cant_corridas >= 1 and ((isinstance(apuesta, int) and 0 <= apuesta <= 36) or apuesta in ["rojo","negro","par","impar","c1","c2","c3"]) and estrategia_utilizada in ['m','d','f','o'] and tipo_capital in ['i','f']:
             ruleta_casino(cant_corridas, cant_tiradas, apuesta, estrategia_utilizada, tipo_capital)
         else:
             print("Argumentos inválidos. Rangos: corridas>=1, tiradas>=1, número entre 0 y 36, estrategia tiene que estar entre ['m','d','f','o'] y tipo de capital tiene que estar entre ['i','f'] .")
