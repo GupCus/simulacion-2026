@@ -52,7 +52,7 @@ def simular_corrida(cant_tiradas, apuesta, estrategia,tipo_capital) -> tuple:
         elif estrategia=="d":
            cant_a_apostar, caja = dalembert(apuesta, valor, caja, cant_a_apostar, cantidad_apostada_inicial)
         elif estrategia=="f":
-           cant_a_apostar,caja=fibonacci()
+           cant_a_apostar,caja=fibonacci(apuesta,valor,caja,cant_a_apostar,cantidad_apostada_inicial)
         elif estrategia=="o":
             cant_a_apostar,caja,cortar=goBigOrGoHome(apuesta, valor, caja, cant_a_apostar, capital_inicial, cantidad_apostada_inicial)
             if cortar:
@@ -70,6 +70,7 @@ def simular_corrida(cant_tiradas, apuesta, estrategia,tipo_capital) -> tuple:
         
         valores_caja.append(caja)
         valores_frecuencia_acumulada.append(gane/(j+1))  #j+1 porque j empieza en 0
+    
     #esto se printeaba para debuguear
     #print(cant_a_apostar)
     #print( valores_caja)
@@ -155,7 +156,7 @@ def ruleta_casino(cant_corridas, cant_tiradas, nro_apostado, estrategia, tipo_ca
         print(f"Corridas simuladas: {cant_corridas}")
         print(f"Bancarrotas: {bancarrotas} ({bancarrotas/cant_corridas*100:.1f}%)")
 
-    
+
     
 # ─────────────────────────────────────────────
 # Estrategias
@@ -232,8 +233,60 @@ def dalembert(apuesta, valor, caja, cant_a_apostar, cant_apostada_inicial) -> tu
 
     return cant_a_apostar, caja
 
-def fibonacci():
-    pass
+def fibonacci(apuesta, valor, caja, cant_a_apostar, cantidad_apostada_inicial):
+    #No tengo forma de saber en que posicion de fibonacci estoy, tuve que descubrir el multiplicador de la apuesta incial así:
+    multiplicador = cant_a_apostar / cantidad_apostada_inicial
+
+    #Va a ir generando el valor de fibonacci hasta encontrar en el que estoy parado, no es lo más optimo
+    fibonacci_valores = [1, 1]
+    while fibonacci_valores[-1] < multiplicador:
+        siguiente_valor = fibonacci_valores[-1] + fibonacci_valores[-2]
+        fibonacci_valores.append(siguiente_valor)
+
+    #Me fijo si gané, esto capaz debería ir en un metodo aparte
+    gane = False
+    match apuesta:
+        case "rojo" if valor in rojo:
+            gane = True
+            caja += cant_a_apostar
+        case "negro" if valor in negro:
+            gane = True
+            caja += cant_a_apostar
+        case "par" if valor % 2 == 0 and valor != 0:
+            gane = True
+            caja += cant_a_apostar
+        case "impar" if valor % 2 != 0 and valor != 0:
+            gane = True
+            caja += cant_a_apostar
+        case "c1" if valor in primera_columna:
+            gane = True
+            caja += cant_a_apostar * 2
+        case "c2" if valor in segunda_columna:
+            gane = True
+            caja += cant_a_apostar * 2
+        case "c3" if valor in tercera_columna:
+            gane = True
+            caja += cant_a_apostar * 2
+        case _ if valor == apuesta:
+            gane = True
+            caja += cant_a_apostar * 35
+
+    #Si gano, retrocedo dos posiciones (-2) desde el valor que estoy parado (-1)
+    #En caso de ganar la primera atajo con un 1
+    #En caso de perder avanzo una posicion en fibonacci
+    if gane:
+        if len(fibonacci_valores) >= 3:
+            multiplicadornvo = fibonacci_valores[-3]
+        else:
+            multiplicadornvo = 1
+    else:
+        caja = caja - cant_a_apostar
+        multiplicadornvo = fibonacci_valores[-1] + fibonacci_valores[-2]
+
+    #Finalmente, multiplico el valor de fibonacci por el valor inicial
+    cant_a_apostar = cantidad_apostada_inicial * multiplicadornvo
+
+    return cant_a_apostar, caja
 
 def goBigOrGoHome(apuesta, valor, caja, cant_a_apostar, capital_inicial, cantidad_apostada_inicial):
     if valor == apuesta:
