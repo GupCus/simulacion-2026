@@ -38,9 +38,11 @@ def simular_corrida(cant_tiradas, apuesta, estrategia,tipo_capital) -> tuple:
     valores_frecuencia_acumulada=[]
     gane=0
     cortar = False
+    bancarrota = False
 
     for j in range(cant_tiradas):
         if tipo_capital=='f' and cant_a_apostar>caja:
+            bancarrota = True
             break
 
         valor = random.randint(0, 36)
@@ -48,7 +50,7 @@ def simular_corrida(cant_tiradas, apuesta, estrategia,tipo_capital) -> tuple:
         if estrategia=="m":
             cant_a_apostar,caja=martingala(apuesta,valor,caja,cant_a_apostar,cantidad_apostada_inicial)
         elif estrategia=="d":
-           cant_a_apostar,caja=dalembert()
+           cant_a_apostar, caja = dalembert(apuesta, valor, caja, cant_a_apostar, cantidad_apostada_inicial)
         elif estrategia=="f":
            cant_a_apostar,caja=fibonacci()
         elif estrategia=="o":
@@ -68,10 +70,11 @@ def simular_corrida(cant_tiradas, apuesta, estrategia,tipo_capital) -> tuple:
         
         valores_caja.append(caja)
         valores_frecuencia_acumulada.append(gane/(j+1))  #j+1 porque j empieza en 0
-    print(cant_a_apostar)
-    print( valores_caja)
-    print(valores_frecuencia_acumulada[:30])
-    return valores_caja,valores_frecuencia_acumulada,capital_inicial
+    #esto se printeaba para debuguear
+    #print(cant_a_apostar)
+    #print( valores_caja)
+    #print(valores_frecuencia_acumulada[:30])
+    return valores_caja,valores_frecuencia_acumulada,capital_inicial,bancarrota
 
 def frecuencia_esperada(apuesta):
     if apuesta in ['rojo','negro','par','impar']:
@@ -132,17 +135,25 @@ def graficar_multiples(valores_caja_corridas,  valores_frecuencia_acumulada_corr
 def ruleta_casino(cant_corridas, cant_tiradas, nro_apostado, estrategia, tipo_capital):
     frecuencia=frecuencia_esperada(nro_apostado)
     #esto seria para una sola corrida (las dos primeras graficas)
-    valores_caja,valores_frecuencia_acumulada,capital_inicial=simular_corrida(cant_tiradas,nro_apostado,estrategia,tipo_capital)
+    valores_caja,valores_frecuencia_acumulada,capital_inicial,_=simular_corrida(cant_tiradas,nro_apostado,estrategia,tipo_capital)
     graficar(valores_caja,valores_frecuencia_acumulada,capital_inicial,frecuencia)
 
     valores_caja_corridas=[]
     valores_frecuencia_acumulada_corridas=[]
+    bancarrotas = 0
 
     for i in range(cant_corridas):
-        valor_caja_corrida,valor_frecuencia_acumulada_corrida,capital_inicial=simular_corrida(cant_tiradas,nro_apostado,estrategia,tipo_capital)
+        valor_caja_corrida,valor_freq_corrida,capital_inicial,hubo_bancarrota=simular_corrida(cant_tiradas,nro_apostado,estrategia,tipo_capital)
+        if hubo_bancarrota:
+            bancarrotas += 1
         valores_caja_corridas.append(valor_caja_corrida)
-        valores_frecuencia_acumulada_corridas.append(valor_frecuencia_acumulada_corrida)
+        valores_frecuencia_acumulada_corridas.append(valor_freq_corrida)
     graficar_multiples(valores_caja_corridas,  valores_frecuencia_acumulada_corridas, capital_inicial,frecuencia)
+
+    if tipo_capital == 'f':
+        print(f"\n--- Resumen de bancarrotas ---")
+        print(f"Corridas simuladas: {cant_corridas}")
+        print(f"Bancarrotas: {bancarrotas} ({bancarrotas/cant_corridas*100:.1f}%)")
 
     
     
@@ -182,8 +193,44 @@ def martingala(apuesta, valor, caja,cant_a_apostar,cant_apostada_inicial) ->tupl
         
     return cant_a_apostar,caja
 
-def dalembert():
-    pass
+def dalembert(apuesta, valor, caja, cant_a_apostar, cant_apostada_inicial) -> tuple:
+    gano = False
+    multiplicador_ganancia = 0
+
+    if apuesta == "rojo" and valor in rojo:
+        gano = True
+        multiplicador_ganancia = 1
+    elif apuesta == "negro" and valor in negro:
+        gano = True
+        multiplicador_ganancia = 1
+    elif apuesta == "par" and valor % 2 == 0 and valor != 0:
+        gano = True
+        multiplicador_ganancia = 1
+    elif apuesta == "impar" and valor % 2 != 0 and valor != 0:
+        gano = True
+        multiplicador_ganancia = 1
+    elif apuesta == "c1" and valor in primera_columna:
+        gano = True
+        multiplicador_ganancia = 2
+    elif apuesta == "c2" and valor in segunda_columna:
+        gano = True
+        multiplicador_ganancia = 2
+    elif apuesta == "c3" and valor in tercera_columna:
+        gano = True
+        multiplicador_ganancia = 2
+    elif valor == apuesta:
+        gano = True
+        multiplicador_ganancia = 35
+
+    if gano:
+        caja = caja + cant_a_apostar * multiplicador_ganancia
+        # Bajar 1 unidad, pero nunca por debajo de la unidad base
+        cant_a_apostar = max(cant_apostada_inicial, cant_a_apostar - cant_apostada_inicial)
+    else:
+        caja = caja - cant_a_apostar
+        cant_a_apostar = cant_a_apostar + cant_apostada_inicial
+
+    return cant_a_apostar, caja
 
 def fibonacci():
     pass
