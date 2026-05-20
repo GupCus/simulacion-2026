@@ -1,11 +1,11 @@
 # Consignas del TP:
-# • Beneficios de las apuestas según la selección (color, fila, número único, etc).
+# • Beneficios de las apuestas según la selección (color, fila, número único, etc.).
 # • Distintos tipos de estrategias de apuestas en la ruleta.
 # • Gráficas de los resultados mediante el paquete Matplotlib (u otro similar).
-# Se pide que se detalle la estrategias empleadas y las fuentes donde las obtuvieron (si no son de elaboración propia).
-# Se proponen analizar 3 estrategia: la martingala, D’Alembert y Fibonacci,
-# Por lo tanto la ejecución junto con el TP 1.1: python programa.py -c XXX -n YYY -e ZZ -s -a
-# Nota: El parámetro -e es solo en caso de usar un solo número para la estrategia seleccionada, sino no es necesario.
+# Se pide que se detalle las estrategias empleadas y las fuentes donde las obtuvieron (si no son de elaboración propia).
+# Se proponen analizar 3 estrategias: la martingala, D’Alembert y Fibonacci,
+# Por lo tanto, la ejecución junto con el TP 1.1: python programa.py -c XXX -n YYY -e ZZ -s -a
+# Nota: El parámetro -e es solo en caso de usar un solo número para la estrategia seleccionada, si no no es necesario.
 
 import random
 import matplotlib.pyplot as plt
@@ -26,9 +26,46 @@ segunda_columna = [2, 5, 8, 11, 14, 17, 20, 23, 26, 29, 32, 35]
 
 tercera_columna = [3, 6, 9, 12, 15, 18, 21, 24, 27, 30, 33, 36]
 
+# ---------------------------------------------
+# Crupier (indica si ganaste o no, actualiza la caja según la apuesta)
+# ---------------------------------------------
+
+def crupier(apuesta,valor,caja,cant_a_apostar):
+    match apuesta:
+        case "rojo" if valor in rojo:
+            gane = True
+            caja += cant_a_apostar
+        case "negro" if valor in negro:
+            gane = True
+            caja += cant_a_apostar
+        case "par" if valor % 2 == 0 and valor != 0:
+            gane = True
+            caja += cant_a_apostar
+        case "impar" if valor % 2 != 0 and valor != 0:
+            gane = True
+            caja += cant_a_apostar
+        case "c1" if valor in primera_columna:
+            gane = True
+            caja += cant_a_apostar * 2
+        case "c2" if valor in segunda_columna:
+            gane = True
+            caja += cant_a_apostar * 2
+        case "c3" if valor in tercera_columna:
+            gane = True
+            caja += cant_a_apostar * 2
+        case _ if valor == apuesta:
+            gane = True
+            caja += cant_a_apostar * 35
+        case _ :
+            gane = False
+            caja -= cant_a_apostar
+    return gane, caja
+
+
 # ─────────────────────────────────────────────
 # Simulación de una corrida
 # ─────────────────────────────────────────────
+# noinspection PyTypeChecker
 def simular_corrida(cant_tiradas, apuesta, estrategia,tipo_capital) -> tuple:
     caja=100000
     capital_inicial=caja
@@ -37,41 +74,36 @@ def simular_corrida(cant_tiradas, apuesta, estrategia,tipo_capital) -> tuple:
     valores_caja=[]
     valores_frecuencia_acumulada=[]
     gane=0
-    cortar = False
     bancarrota = False
 
     for j in range(cant_tiradas):
-        if tipo_capital=='f' and cant_a_apostar>caja:
+        # noinspection PyUnresolvedReferences
+        if tipo_capital=='f' and (cant_a_apostar > caja):
             bancarrota = True
             break
 
         valor = random.randint(0, 36)
 
-        if estrategia=="m":
-            cant_a_apostar,caja=martingala(apuesta,valor,caja,cant_a_apostar,cantidad_apostada_inicial)
-        elif estrategia=="d":
-           cant_a_apostar, caja = dalembert(apuesta, valor, caja, cant_a_apostar, cantidad_apostada_inicial)
-        elif estrategia=="f":
-           cant_a_apostar,caja=fibonacci(apuesta,valor,caja,cant_a_apostar,cantidad_apostada_inicial)
-        elif estrategia=="o":
-            cant_a_apostar,caja,cortar=goBigOrGoHome(apuesta, valor, caja, cant_a_apostar, capital_inicial, cantidad_apostada_inicial)
-            if cortar:
-                break
+        resultado,caja=crupier(apuesta,valor,caja,cant_a_apostar)
+
+        #LAS ESTRATEGIAS SOLO DEBERÍAN MODIFICAR LA PROXIMA APUESTA
+        match estrategia:
+            case "m":
+                cant_a_apostar=martingala(cant_a_apostar,cantidad_apostada_inicial,resultado)
+            case "d":
+                cant_a_apostar= dalembert(cant_a_apostar, cantidad_apostada_inicial,resultado)
+            case "f":
+                cant_a_apostar=fibonacci(cant_a_apostar,cantidad_apostada_inicial,resultado)
+            case "o":
+                cant_a_apostar,cortar=goBigOrGoHome(caja, cant_a_apostar, capital_inicial, cantidad_apostada_inicial,resultado)
+                if cortar: break
         
-        if  (apuesta == "rojo" and valor in rojo) or \
-            (apuesta == "negro" and valor in negro) or \
-            (apuesta == "par" and valor != 0 and valor % 2 == 0) or \
-            (apuesta == "impar" and valor != 0 and valor % 2 != 0) or \
-            (apuesta == "c1" and valor in primera_columna) or \
-            (apuesta == "c2" and valor in segunda_columna) or \
-            (apuesta == "c3" and valor in tercera_columna) or \
-            (valor == apuesta):
-            gane = gane + 1
+        if resultado: gane = gane + 1
         
         valores_caja.append(caja)
         valores_frecuencia_acumulada.append(gane/(j+1))  #j+1 porque j empieza en 0
-    
-    #esto se printeaba para debuguear
+
+    #esto se printable para debugger
     #print(cant_a_apostar)
     #print( valores_caja)
     #print(valores_frecuencia_acumulada[:30])
@@ -85,7 +117,7 @@ def frecuencia_esperada(apuesta):
     else:
         return 1/37
 # ─────────────────────────────────────────────
-# Graficación
+#   Graficación
 # ─────────────────────────────────────────────
 def graficar(valores_caja,valores_frecuencia_acumulada,capital_inicial,frecuencia):
   fig,(ax1,ax2)=plt.subplots(1,2,figsize=(12,5))
@@ -135,7 +167,7 @@ def graficar_multiples(valores_caja_corridas,  valores_frecuencia_acumulada_corr
 # ─────────────────────────────────────────────
 def ruleta_casino(cant_corridas, cant_tiradas, nro_apostado, estrategia, tipo_capital):
     frecuencia=frecuencia_esperada(nro_apostado)
-    #esto seria para una sola corrida (las dos primeras graficas)
+    #esto sería para una sola corrida (las dos primeras gráficas)
     valores_caja,valores_frecuencia_acumulada,capital_inicial,_=simular_corrida(cant_tiradas,nro_apostado,estrategia,tipo_capital)
     graficar(valores_caja,valores_frecuencia_acumulada,capital_inicial,frecuencia)
 
@@ -162,147 +194,63 @@ def ruleta_casino(cant_corridas, cant_tiradas, nro_apostado, estrategia, tipo_ca
 # Estrategias
 # ─────────────────────────────────────────────
 
-def martingala(apuesta, valor, caja,cant_a_apostar,cant_apostada_inicial) ->tuple:
-   
-    if apuesta == "rojo" and valor in rojo:
-        caja=caja+cant_a_apostar*2-cant_a_apostar
-        cant_a_apostar=cant_apostada_inicial
-    elif apuesta == "negro" and valor in negro:
-        caja=caja+cant_a_apostar*2-cant_a_apostar
-        cant_a_apostar=cant_apostada_inicial
-    elif apuesta == "par" and valor % 2 == 0 and valor != 0:
-        caja=caja+cant_a_apostar*2-cant_a_apostar
-        cant_a_apostar=cant_apostada_inicial
-    elif apuesta == "impar" and valor % 2 != 0 and valor != 0:
-        caja=caja+cant_a_apostar*2-cant_a_apostar
-        cant_a_apostar=cant_apostada_inicial
-    elif apuesta == "c1" and valor in primera_columna: 
-        caja=caja+cant_a_apostar*3-cant_a_apostar
-        cant_a_apostar=cant_apostada_inicial
-    elif apuesta == "c2" and valor in segunda_columna: 
-        caja=caja+cant_a_apostar*3-cant_a_apostar
-        cant_a_apostar=cant_apostada_inicial
-    elif apuesta == "c3" and valor in tercera_columna: 
-        caja=caja+cant_a_apostar*3-cant_a_apostar
-        cant_a_apostar=cant_apostada_inicial
-    elif valor == apuesta: 
-        caja=caja+cant_a_apostar*36-cant_a_apostar
-        cant_a_apostar=cant_apostada_inicial
+def martingala(cant_a_apostar,cant_apostada_inicial,resultado):
+
+    if resultado:
+       cant_a_apostar = cant_apostada_inicial
     else:
-        caja=caja-cant_a_apostar
-        cant_a_apostar=cant_a_apostar*2
-        
-    return cant_a_apostar,caja
+       cant_a_apostar = cant_a_apostar * 2
+    return cant_a_apostar
 
-def dalembert(apuesta, valor, caja, cant_a_apostar, cant_apostada_inicial) -> tuple:
-    gano = False
-    multiplicador_ganancia = 0
+def dalembert(cant_a_apostar, cant_apostada_inicial,resultado):
 
-    if apuesta == "rojo" and valor in rojo:
-        gano = True
-        multiplicador_ganancia = 1
-    elif apuesta == "negro" and valor in negro:
-        gano = True
-        multiplicador_ganancia = 1
-    elif apuesta == "par" and valor % 2 == 0 and valor != 0:
-        gano = True
-        multiplicador_ganancia = 1
-    elif apuesta == "impar" and valor % 2 != 0 and valor != 0:
-        gano = True
-        multiplicador_ganancia = 1
-    elif apuesta == "c1" and valor in primera_columna:
-        gano = True
-        multiplicador_ganancia = 2
-    elif apuesta == "c2" and valor in segunda_columna:
-        gano = True
-        multiplicador_ganancia = 2
-    elif apuesta == "c3" and valor in tercera_columna:
-        gano = True
-        multiplicador_ganancia = 2
-    elif valor == apuesta:
-        gano = True
-        multiplicador_ganancia = 35
-
-    if gano:
-        caja = caja + cant_a_apostar * multiplicador_ganancia
+    if resultado:
         # Bajar 1 unidad, pero nunca por debajo de la unidad base
         cant_a_apostar = max(cant_apostada_inicial, cant_a_apostar - cant_apostada_inicial)
     else:
-        caja = caja - cant_a_apostar
         cant_a_apostar = cant_a_apostar + cant_apostada_inicial
 
-    return cant_a_apostar, caja
+    return cant_a_apostar
 
-def fibonacci(apuesta, valor, caja, cant_a_apostar, cantidad_apostada_inicial):
-    #No tengo forma de saber en que posicion de fibonacci estoy, tuve que descubrir el multiplicador de la apuesta incial así:
+def fibonacci(cant_a_apostar, cantidad_apostada_inicial,resultado):
+    #No tengo forma de saber en qué posición de fibonacci estoy, tuve que descubrir el multiplicador de la apuesta incial así:
     multiplicador = cant_a_apostar / cantidad_apostada_inicial
 
-    #Va a ir generando el valor de fibonacci hasta encontrar en el que estoy parado, no es lo más optimo
+    #Va a ir generando el valor de fibonacci hasta encontrar en el que estoy parado, no es lo más óptimo
     fibonacci_valores = [1, 1]
     while fibonacci_valores[-1] < multiplicador:
         siguiente_valor = fibonacci_valores[-1] + fibonacci_valores[-2]
         fibonacci_valores.append(siguiente_valor)
 
-    #Me fijo si gané, esto capaz debería ir en un metodo aparte
-    gane = False
-    match apuesta:
-        case "rojo" if valor in rojo:
-            gane = True
-            caja += cant_a_apostar
-        case "negro" if valor in negro:
-            gane = True
-            caja += cant_a_apostar
-        case "par" if valor % 2 == 0 and valor != 0:
-            gane = True
-            caja += cant_a_apostar
-        case "impar" if valor % 2 != 0 and valor != 0:
-            gane = True
-            caja += cant_a_apostar
-        case "c1" if valor in primera_columna:
-            gane = True
-            caja += cant_a_apostar * 2
-        case "c2" if valor in segunda_columna:
-            gane = True
-            caja += cant_a_apostar * 2
-        case "c3" if valor in tercera_columna:
-            gane = True
-            caja += cant_a_apostar * 2
-        case _ if valor == apuesta:
-            gane = True
-            caja += cant_a_apostar * 35
-
     #Si gano, retrocedo dos posiciones (-2) desde el valor que estoy parado (-1)
     #En caso de ganar la primera atajo con un 1
-    #En caso de perder avanzo una posicion en fibonacci
-    if gane:
+    #En caso de perder avanzo una posición en fibonacci
+    if resultado:
         if len(fibonacci_valores) >= 3:
             multiplicadornvo = fibonacci_valores[-3]
         else:
             multiplicadornvo = 1
     else:
-        caja = caja - cant_a_apostar
         multiplicadornvo = fibonacci_valores[-1] + fibonacci_valores[-2]
 
     #Finalmente, multiplico el valor de fibonacci por el valor inicial
     cant_a_apostar = cantidad_apostada_inicial * multiplicadornvo
 
-    return cant_a_apostar, caja
+    return cant_a_apostar
 
-def goBigOrGoHome(apuesta, valor, caja, cant_a_apostar, capital_inicial, cantidad_apostada_inicial):
-    if valor == apuesta:
-        caja = caja + cant_a_apostar * 35
+def goBigOrGoHome(caja, cant_a_apostar, capital_inicial, cantidad_apostada_inicial,resultado):
+    if resultado:
         if caja >= capital_inicial * 2:
-            return cant_a_apostar, caja, True
+            return cant_a_apostar, True
         cant_a_apostar = cantidad_apostada_inicial
-        return cant_a_apostar, caja, False
+        return cant_a_apostar, False
     else:
-        caja = caja - cant_a_apostar
         cant_a_apostar = cant_a_apostar * 1.2
-        return cant_a_apostar, caja, False
+        return cant_a_apostar, False
 
-# ─────────────────────────────────────────────
-# Entry point
-# ─────────────────────────────────────────────
+# ---------------------------------------------
+# Main
+# ---------------------------------------------
 def main():
     try:
         cant_corridas = int(sys.argv[2])
