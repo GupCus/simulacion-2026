@@ -8,7 +8,10 @@
 # Nota: El parámetro -e es solo en caso de usar un solo número para la estrategia seleccionada, si no no es necesario.
 
 import random
+import string
+
 import matplotlib.pyplot as plt
+from matplotlib.ticker import MaxNLocator
 import sys
 
 
@@ -119,7 +122,7 @@ def frecuencia_esperada(apuesta):
 # ─────────────────────────────────────────────
 #   Graficación
 # ─────────────────────────────────────────────
-def graficar(valores_caja,valores_frecuencia_acumulada,capital_inicial,frecuencia):
+def graficar(valores_caja,valores_frecuencia_acumulada,capital_inicial,frecuencia,cant_tiradas, estrategia_utilizada, tipo_capital,apuesta):
   fig,(ax1,ax2)=plt.subplots(1,2,figsize=(12,5))
   eje_x=range(1,len(valores_frecuencia_acumulada)+1)
   ax1.bar(eje_x,valores_frecuencia_acumulada,color="red")
@@ -128,16 +131,20 @@ def graficar(valores_caja,valores_frecuencia_acumulada,capital_inicial,frecuenci
   ax1.set_title('Frecuencia relativa de obtener la apuesta favorable segun n')
   ax1.axhline(y=frecuencia, color='blue', linestyle='--', label=f'frec. esperada ({frecuencia:.4f})')
   ax1.legend()
+  ax1.xaxis.set_major_locator(MaxNLocator(integer=True))
   ax2.plot(eje_x,valores_caja,color="red",label="fc (Flujo de caja)")
   ax2.axhline(y=capital_inicial,color="blue",linestyle="--",label="fci (flujo de caja inicial)")
   ax2.set_xlabel("n (numero de tiradas)")
   ax2.set_ylabel("cc (cantidad de capital)")
   ax2.set_title("Flujo de caja")
   ax2.legend()
+  ax2.ticklabel_format(style='plain', axis='y')
+  ax2.xaxis.set_major_locator(MaxNLocator(integer=True))
   plt.tight_layout()
+  plt.savefig(f'{cant_tiradas}tiradas{estrategia_utilizada.upper()}_capital{tipo_capital.upper()}_apuesta{apuesta}.png')
   plt.show()
 
-def graficar_multiples(valores_caja_corridas,  valores_frecuencia_acumulada_corridas, capital_inicial,frecuencia):
+def graficar_multiples(valores_caja_corridas,  valores_frecuencia_acumulada_corridas, capital_inicial,frecuencia,cant_corridas, cant_tiradas, estrategia_utilizada, tipo_capital,apuesta):
     fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(12, 5))
 
     for  valor_frecuencia_corrida in  valores_frecuencia_acumulada_corridas:
@@ -149,6 +156,7 @@ def graficar_multiples(valores_caja_corridas,  valores_frecuencia_acumulada_corr
     ax1.set_ylabel('fr (frecuencia relativa)')
     ax1.set_title('Frecuencia relativa - varias corridas')
     ax1.legend()
+    ax1.xaxis.set_major_locator(MaxNLocator(integer=True))
 
     for  valor_caja_corrida in valores_caja_corridas:
         eje_x = range(1, len(valor_caja_corrida) + 1)
@@ -159,8 +167,11 @@ def graficar_multiples(valores_caja_corridas,  valores_frecuencia_acumulada_corr
     ax2.set_ylabel('cc (cantidad de capital)')
     ax2.set_title('Flujo de caja - varias corridas')
     ax2.legend()
+    ax2.ticklabel_format(style='plain', axis='y')
+    ax2.xaxis.set_major_locator(MaxNLocator(integer=True))
 
     plt.tight_layout()
+    plt.savefig(f'{cant_corridas}corridas{cant_tiradas}tiradas{estrategia_utilizada.upper()}_capital{tipo_capital.upper()}_apuesta{apuesta}.png')
     plt.show()
 # ─────────────────────────────────────────────
 # Función principal de simulación
@@ -169,7 +180,7 @@ def ruleta_casino(cant_corridas, cant_tiradas, nro_apostado, estrategia, tipo_ca
     frecuencia=frecuencia_esperada(nro_apostado)
     #esto sería para una sola corrida (las dos primeras gráficas)
     valores_caja,valores_frecuencia_acumulada,capital_inicial,_=simular_corrida(cant_tiradas,nro_apostado,estrategia,tipo_capital)
-    graficar(valores_caja,valores_frecuencia_acumulada,capital_inicial,frecuencia)
+    graficar(valores_caja,valores_frecuencia_acumulada,capital_inicial,frecuencia,cant_tiradas, estrategia, tipo_capital,nro_apostado)
 
     valores_caja_corridas=[]
     valores_frecuencia_acumulada_corridas=[]
@@ -181,7 +192,7 @@ def ruleta_casino(cant_corridas, cant_tiradas, nro_apostado, estrategia, tipo_ca
             bancarrotas += 1
         valores_caja_corridas.append(valor_caja_corrida)
         valores_frecuencia_acumulada_corridas.append(valor_freq_corrida)
-    graficar_multiples(valores_caja_corridas,  valores_frecuencia_acumulada_corridas, capital_inicial,frecuencia)
+    graficar_multiples(valores_caja_corridas,  valores_frecuencia_acumulada_corridas, capital_inicial,frecuencia,cant_corridas, cant_tiradas, estrategia, tipo_capital,nro_apostado)
 
     if tipo_capital == 'f':
         print(f"\n--- Resumen de bancarrotas ---")
