@@ -98,8 +98,9 @@ def simular_corrida(cant_tiradas, apuesta, estrategia,tipo_capital) -> tuple:
             case "f":
                 cant_a_apostar=fibonacci(cant_a_apostar,cantidad_apostada_inicial,resultado)
             case "o":
-                cant_a_apostar,cortar=goBigOrGoHome(caja, cant_a_apostar, capital_inicial, cantidad_apostada_inicial,resultado)
+                cant_a_apostar, cortar = goBigOrGoHome(caja, cant_a_apostar, capital_inicial, cantidad_apostada_inicial, resultado, tipo_capital)
                 if cortar: break
+
         
         if resultado: gane = gane + 1
         
@@ -249,16 +250,15 @@ def fibonacci(cant_a_apostar, cantidad_apostada_inicial,resultado):
 
     return cant_a_apostar
 
-def goBigOrGoHome(caja, cant_a_apostar, capital_inicial, cantidad_apostada_inicial,resultado):
+def goBigOrGoHome(caja, cant_a_apostar, capital_inicial, cantidad_apostada_inicial, resultado, tipo_capital):
     if resultado:
-        if caja >= capital_inicial * 2:
+        if tipo_capital == 'f' and caja >= capital_inicial * 2:
             return cant_a_apostar, True
         cant_a_apostar = cantidad_apostada_inicial
         return cant_a_apostar, False
     else:
         cant_a_apostar = cant_a_apostar * 1.2
         return cant_a_apostar, False
-
 # ---------------------------------------------
 # Main
 # ---------------------------------------------
