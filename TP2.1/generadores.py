@@ -1,5 +1,7 @@
-### generadores pseudoaleatorios 
+### generadores pseudoaleatorios
 import math
+import json
+import sys
 
 def gcl(m, a, c, x0, n):
     """
@@ -165,21 +167,89 @@ def test_corridas(secuencia):
     return z
 
 
-# ── Demo ──────────────────────────────────────────────────────────────────────
+def python_random(n):
+    import random
+    return [random.random() for _ in range(n)]
+
+
+GENERADORES = {
+    "gcl": lambda n: gcl(m=2**32, a=1664525, c=1013904223, x0=42, n=n),
+    "python_random": python_random,
+}
+
+
+def guardar_resultados(nombre, resultados_dict):
+    with open(f"resultados_{nombre}.json", "w") as f:
+        json.dump(resultados_dict, f, indent=2)
+
+
+def generar_graficas(secuencia, nombre):
+    import matplotlib.pyplot as plt
+
+    n = len(secuencia)
+    intervalos = 10
+    esperado = n / intervalos
+
+    # Histograma
+    fig, ax = plt.subplots()
+    ax.hist(secuencia, bins=intervalos, range=(0, 1), edgecolor="black")
+    ax.axhline(y=esperado, color="red", linestyle="--", label=f"esperado ({esperado:.1f})")
+    ax.set_xlabel("Valor")
+    ax.set_ylabel("Frecuencia")
+    ax.set_title(f"Histograma — {nombre}")
+    ax.legend()
+    fig.savefig(f"{nombre}_histograma.png")
+    plt.close(fig)
+
+    # Scatter de pares consecutivos
+    fig, ax = plt.subplots()
+    ax.scatter(secuencia[:-1], secuencia[1:], s=2, alpha=0.5)
+    ax.set_xlabel("U_i")
+    ax.set_ylabel("U_{i+1}")
+    ax.set_title(f"Scatter pares consecutivos — {nombre}")
+    fig.savefig(f"{nombre}_scatter.png")
+    plt.close(fig)
+
+
+def ejecutar(nombre, n=1000):
+    if nombre not in GENERADORES:
+        print(f"Generador '{nombre}' no encontrado. Disponibles: {list(GENERADORES.keys())}")
+        return
+
+    secuencia = GENERADORES[nombre](n)
+
+    chi2_unif          = test_uniformidad(secuencia, intervalos=10)
+    desvio_max, desvio_prom = test_frecuencia(secuencia, intervalos=10)
+    chi2_series        = test_series(secuencia, intervalos=5)
+    z_corridas         = test_corridas(secuencia)
+
+    guardar_resultados(nombre, {
+        "generador": nombre,
+        "n": n,
+        "uniformidad_chi2": chi2_unif,
+        "frecuencia_desviacion_max": desvio_max,
+        "frecuencia_desviacion_prom": desvio_prom,
+        "series_chi2": chi2_series,
+        "corridas_z": z_corridas,
+    })
+
+    generar_graficas(secuencia, nombre)
+
+    print(f"Archivos guardados: resultados_{nombre}.json, {nombre}_histograma.png, {nombre}_scatter.png")
+
+
+# ── Entry point ───────────────────────────────────────────────────────────────
 
 if __name__ == "__main__":
+    if len(sys.argv) > 1:
+        nombre = sys.argv[1]
+    else:
+        print(f"Generadores disponibles: {list(GENERADORES.keys())}")
+        nombre = input("Escribí el nombre del generador: ").strip()
 
-    # Acá va cualquier secuencia en [0, 1) — de cualquier generador
-    secuencia = gcl(m=2**32, a=1664525, c=1013904223, x0=42, n=1000)
+    ejecutar(nombre, n=1000)
 
-    print()
-    test_uniformidad(secuencia, intervalos=10)
-    print()
-    test_frecuencia(secuencia, intervalos=10)
-    print()
-    test_series(secuencia, intervalos=5)
-    print()
-    test_corridas(secuencia)
+# python_random(n): genera n floats en [0, 1) usando random.random() (Mersenne Twister) de la stdlib de Python.
 
 
 

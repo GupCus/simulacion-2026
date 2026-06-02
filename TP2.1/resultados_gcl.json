@@ -1,0 +1,9 @@
+{
+  "generador": "gcl",
+  "n": 1000,
+  "uniformidad_chi2": 12.0,
+  "frecuencia_desviacion_max": 23.0,
+  "frecuencia_desviacion_prom": 8.4,
+  "series_chi2": 19.943943943943943,
+  "corridas_z": 1.2511343547466005
+}

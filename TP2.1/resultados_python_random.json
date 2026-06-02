@@ -1,0 +1,9 @@
+{
+  "generador": "python_random",
+  "n": 1000,
+  "uniformidad_chi2": 8.22,
+  "frecuencia_desviacion_max": 17.0,
+  "frecuencia_desviacion_prom": 7.0,
+  "series_chi2": 22.496496496496498,
+  "corridas_z": 1.6264746611705816
+}
