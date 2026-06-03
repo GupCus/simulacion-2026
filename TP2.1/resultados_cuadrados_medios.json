@@ -1,0 +1,9 @@
+{
+  "generador": "cuadrados_medios",
+  "n": 1000,
+  "uniformidad_chi2": 1382.84,
+  "frecuencia_desviacion_max": 146.0,
+  "frecuencia_desviacion_prom": 115.2,
+  "series_chi2": 4829.803803803803,
+  "corridas_z": -12.786593105510288
+}

@@ -2,6 +2,7 @@
 import math
 import json
 import sys
+import time
 
 def gcl(m, a, c, x0, n):
     """
@@ -55,6 +56,22 @@ def gcl(m, a, c, x0, n):
 # ── Tests de calidad ──────────────────────────────────────────────────────────
 # Todas las funciones reciben una secuencia de números en [0, 1)
 
+def cuadrados_medios(x0, n):
+    D = len(str(x0))
+    secuencia = []
+    x = x0
+    for _ in range(n):
+        y = x ** 2
+        x = (y // 10**(D//2)) % (10**D)
+        if x == 0:
+            print("Generador degenerado: X=0"); break
+        secuencia.append(x / 10**D)
+    return secuencia
+
+
+def generador_tiempo(n):
+    x0 = int(time.time() * 1000) % 10000
+    return cuadrados_medios(x0=x0, n=n)  
 
 def test_uniformidad(secuencia, intervalos=10):
     """
@@ -175,6 +192,8 @@ def python_random(n):
 GENERADORES = {
     "gcl": lambda n: gcl(m=2**32, a=1664525, c=1013904223, x0=42, n=n),
     "python_random": python_random,
+    "cuadrados_medios": lambda n: cuadrados_medios(x0=1006 , n=n), #con esta semilla NO degenera. Con x0=1234 si.
+    "tiempo": lambda n: generador_tiempo(n) #solo cambia la semilla a una aleatoria pro es lo mismo a cuadrados_medios
 }
 
 
