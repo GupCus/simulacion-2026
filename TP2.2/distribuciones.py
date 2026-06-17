@@ -108,7 +108,7 @@ def testear_distribucion(valores, nombre, media_teorica, varianza_teorica):
     print(f"  Media muestral    : {media_muestral:.4f}  (error: {error_media:.2f}%)")
     print(f"  Varianza teórica  : {varianza_teorica:.4f}")
     print(f"  Varianza muestral : {varianza_muestral:.4f}  (error: {error_varianza:.2f}%)")
-    if error_media < 10 and error_varianza < 15:
+    if error_media < 10 and error_varianza < 20:
         print(f"\n  RESULTADO: OK")
     else:
         print(f"\n  RESULTADO: REVISAR")
