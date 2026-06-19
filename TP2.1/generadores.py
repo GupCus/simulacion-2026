@@ -192,7 +192,7 @@ def python_random(n):
 GENERADORES = {
     "gcl": lambda n: gcl(m=2**32, a=1664525, c=1013904223, x0=42, n=n),
     "python_random": python_random,
-    "cuadrados_medios": lambda n: cuadrados_medios(x0=1006 , n=n), #con esta semilla NO degenera. Con x0=1234 si.
+    "cuadrados_medios": lambda n: cuadrados_medios(x0=1439 , n=n), #con esta semilla NO degenera. Con x0=1234 si.
     "tiempo": lambda n: generador_tiempo(n) #solo cambia la semilla a una aleatoria pro es lo mismo a cuadrados_medios
 }
 

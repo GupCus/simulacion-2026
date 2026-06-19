@@ -6,6 +6,7 @@
 import random
 from math import exp, factorial, floor, log, sqrt
 import matplotlib.pyplot as plt
+from math import comb
 
 # -----------------------------------------------------------------------------
 # DISTRIBUCIÓN UNIFORME (Continua)
@@ -85,6 +86,25 @@ def distribucion_pascal(k, p):
     return resultado
 
 
+# -----------------------------------------------------------------------------
+# DISTRIBUCIÓN binomial (Discreta)
+# -----------------------------------------------------------------------------
+
+def distribucion_binomial(n, p):
+    r = random.random()
+
+    acumulada = 0
+
+    for x in range(n + 1):
+
+        prob = comb(n, x) * (p ** x) * ((1 - p) ** (n - x))
+
+        acumulada += prob
+
+        if r <= acumulada:
+            return x
+
+    return n
 # -----------------------------------------------------------------------------
 # DISTRIBUCIÓN POISSON (Discreta)
 # -----------------------------------------------------------------------------
@@ -322,6 +342,28 @@ def main():
                 f"Pascalk={k}p={p}",
                 media_teorica=((k * (1 - p)) / p),
                 varianza_teorica=(k * (1 - p) / p**2),
+            )
+        case "binomial":
+
+            n = int(input("n (cantidad de ensayos): "))
+            p = float(input("p (probabilidad de éxito): "))
+
+            valores = [
+                distribucion_binomial(n, p)
+                for _ in range(1000)
+            ]
+
+            probs = {
+                x: comb(n, x) * (p ** x) * ((1 - p) ** (n - x))
+                for x in range(n + 1)
+            }
+
+            testear_discreta(
+                valores,
+                f"Binomial(n={n},p={p})",
+                media_teorica=n * p,
+                varianza_teorica=n * p * (1 - p),
+                probs_teoricas=probs,
             )
         case "poisson":
             lam = float(input("λ (media): "))
