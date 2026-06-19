@@ -4,7 +4,7 @@
 # =============================================================================
 
 import random
-from math import log, exp, factorial
+from math import log, exp, factorial,sqrt
 import matplotlib.pyplot as plt
 import numpy as np
 
@@ -35,6 +35,28 @@ def distribucion_exponencial(EX):
 # DISTRIBUCIÓN NORMAL (Continua)
 # -----------------------------------------------------------------------------
 
+def distribucion_normal_limite_central(EX, VX):
+    
+    STDX = sqrt(VX)
+    suma = sum(random.random() for _ in range(12))
+    return STDX * (suma - 6) + EX
+
+
+def distribucion_normal_von_neumann(EX, VX):
+    
+    STDX = sqrt(VX)
+    aceptado = False
+    while not aceptado:
+        r1 = random.random()
+        r2 = random.random()
+        y = -log(r1)
+        aceptado = r2 <= exp(-(y - 1)**2 / 2)
+    r3 = random.random()
+    if r3<=0.5:
+        z=y
+    else:
+        z=-y
+    return STDX * z + EX
 
 # -----------------------------------------------------------------------------
 # DISTRIBUCIÓN PASCAL (Discreta)
@@ -95,8 +117,16 @@ def _nombre_archivo(nombre):
 
 def _imprimir_resultados(nombre, media_teorica, varianza_teorica,
                           media_muestral, varianza_muestral):
-    error_media    = abs(media_muestral - media_teorica) / media_teorica * 100
-    error_varianza = abs(varianza_muestral - varianza_teorica) / varianza_teorica * 100
+    if media_teorica != 0:
+        error_media = abs(media_muestral - media_teorica) / media_teorica * 100
+    else:
+        error_media = abs(media_muestral - media_teorica)
+
+    if varianza_teorica != 0:
+        error_varianza = abs(varianza_muestral - varianza_teorica) / varianza_teorica * 100
+    else:
+        error_varianza = abs(varianza_muestral - varianza_teorica)
+    
     print("=" * 50)
     print(f"  TEST - Distribución {nombre}")
     print("=" * 50)
@@ -210,7 +240,7 @@ def testear_discreta(valores, nombre, media_teorica, varianza_teorica, probs_teo
 
 if __name__ == "__main__":
 
-    opciones = "uniforme / exponencial / poisson / empirica"
+    opciones = "uniforme / exponencial / poisson / empirica / normal"
     distribucion = input(f"Distribución ({opciones}): ").strip().lower()
 
     if distribucion == "uniforme":
@@ -255,6 +285,20 @@ if __name__ == "__main__":
                          media_teorica=ex,
                          varianza_teorica=vx,
                          probs_teoricas=probs)
-
+    elif distribucion == "normal":
+        EX = float(input("EX (media): "))
+        VX = float(input("VX (varianza): "))
+        
+        # Límite central
+        valores_lc = [distribucion_normal_limite_central(EX, VX) for _ in range(1000)]
+        testear_distribucion(valores_lc, f"Normal_limite_central(EX={EX}, VX={VX})",
+                             media_teorica=EX,
+                             varianza_teorica=VX)
+        
+        # Von Neumann
+        valores_vn = [distribucion_normal_von_neumann(EX, VX) for _ in range(1000)]
+        testear_distribucion(valores_vn, f"Normal_von_neumann(EX={EX}, VX={VX})",
+                             media_teorica=EX,
+                             varianza_teorica=VX)
     else:
         print("Distribución no reconocida.")
