@@ -4,7 +4,7 @@
 # =============================================================================
 
 import random
-from math import exp, factorial, log
+from math import exp, factorial, floor, log
 
 import matplotlib.pyplot as plt
 
@@ -36,6 +36,22 @@ def distribucion_normal(a, b):
 def distribucion_exponencial(EX):
     r = random.random()
     return -EX * log(r)
+
+
+# -----------------------------------------------------------------------------
+# DISTRIBUCIÓN PASCAL (Discreta)
+# -----------------------------------------------------------------------------
+
+
+def distribucion_pascal(k, p):
+    q = 1 - p
+    logq = log(q)
+    prod = 1.0
+    for i in range(k):
+        r = distribucion_uniforme(0, 1)
+        prod *= r
+    resultado = floor(log(prod) / logq)
+    return resultado
 
 
 # -----------------------------------------------------------------------------
@@ -71,8 +87,21 @@ def distribucion_empirica_discreta(bs, ps):
 
 
 # =============================================================================
-# FUNCIONES AUXILIARES
+# FUNCIONES AUXILIARES DE TEST
 # =============================================================================
+
+
+def _nombre_archivo(nombre):
+    """Convierte el nombre de la distribución en un nombre de archivo válido."""
+    return (
+        nombre.lower()
+        .replace("(", "")
+        .replace(")", "")
+        .replace("=", "")
+        .replace(",", "")
+        .replace(" ", "_")
+        .replace("λ", "lambda")
+    )
 
 
 def _imprimir_resultados(
@@ -134,8 +163,9 @@ def testear_distribucion(valores, nombre, media_teorica, varianza_teorica):
     plt.ylabel("Frecuencia")
     plt.legend()
     plt.tight_layout()
-    plt.savefig(nombre, dpi=150, bbox_inches="tight")
-    print(f"  Gráfico guardado: {nombre}")
+    archivo = _nombre_archivo(nombre) + ".png"
+    plt.savefig(archivo, dpi=150, bbox_inches="tight")
+    print(f"  Gráfico guardado: {archivo}")
     plt.show()
 
 
@@ -206,8 +236,9 @@ def testear_discreta(valores, nombre, media_teorica, varianza_teorica, probs_teo
     ax.set_ylabel("Probabilidad / Frecuencia relativa")
     ax.legend()
     plt.tight_layout()
-    plt.savefig(nombre, dpi=150, bbox_inches="tight")
-    print(f"  Gráfico guardado: {nombre}")
+    archivo = _nombre_archivo(nombre) + ".png"
+    plt.savefig(archivo, dpi=150, bbox_inches="tight")
+    print(f"  Gráfico guardado: {archivo}")
     plt.show()
 
 
@@ -217,7 +248,7 @@ def testear_discreta(valores, nombre, media_teorica, varianza_teorica, probs_teo
 
 
 def main():
-    opciones = "uniforme / normal / exponencial / poisson / empirica"
+    opciones = "uniforme  / exponencial / gamma / normal / pascal / binomial / hipergeometrica / poisson / empirica"
     distribucion = input(f"Distribución ({opciones}): ").strip().lower()
 
     match distribucion:
@@ -239,7 +270,7 @@ def main():
             valores = [distribucion_normal(a, b) for _ in range(1000)]
             testear_distribucion(
                 valores,
-                f"Uniforme(a={a}, b={b})",
+                f"Normala={a}b={b}",
                 media_teorica=(a + b) / 2,
                 varianza_teorica=(b - a) ** 2 / 12,
             )
@@ -254,6 +285,16 @@ def main():
                 varianza_teorica=EX**2,
             )
 
+        case "pascal":
+            k = int(input("k (número de éxitos buscados): "))
+            p = float(input("p (probabilidad de éxito): "))
+            valores = [distribucion_pascal(k, p) for _ in range(1000)]
+            testear_distribucion(
+                valores,
+                f"Pascalk={k}p={p}",
+                media_teorica=((k * (1 - p)) / p),
+                varianza_teorica=(k * (1 - p) / p**2),
+            )
         case "poisson":
             lam = float(input("λ (media): "))
             valores = [distribucion_poisson(lam) for _ in range(1000)]
